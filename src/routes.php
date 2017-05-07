@@ -226,7 +226,7 @@ $app->delete('/rest/product/delete/[{id}]', function ($request, $response, $args
 });
 
 /**
- * rest/product/*
+ * rest/user/*
  *
  *
  * CRUD user
