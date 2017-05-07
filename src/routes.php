@@ -130,7 +130,7 @@ $app->get('/rest/product/[{id}]', function ($request, $response, $args) {
     $sth = $this->db->prepare("SELECT * FROM produto WHERE id=:id");
     $sth->bindParam("id", $args['id']);
     $sth->execute();
-    $result = $sth->fetchAll();
+    $result = $sth->fetchObject();
     return $this->response->withJson($result);
 });
 
@@ -249,6 +249,15 @@ $app->get('/rest/user/[{id}]', function ($request, $response, $args) {
     return $this->response->withJson($result);
 });
 
+// /rest/user/result/row{id} -> SELECT BY ID
+$app->get('/rest/user/result/row/[{id}]', function ($request, $response, $args) {
+    $sth = $this->db->prepare("SELECT * FROM usuario WHERE user_id=:id");
+    $sth->bindParam("id", $args['id']);
+    $sth->execute();
+    $result = $sth->rowCount();
+    return $this->response->withJson($result);
+});
+
 
 // /rest/user/{name} -> SELECT BY NAME
 $app->get('/rest/user/name/[{nome}]', function ($request, $response, $args) {
@@ -282,9 +291,9 @@ $app->post('/rest/user/add', function ($request, $response) {
             $status = "usuario Adicionada com sucesso!";
         }
 
-        return $this->response->withJson($status);
+        return $this->response->withJson($status, 200);
     } catch (PDOException $e) {
-        return $this->response->withJson("Erro ao add usuario");
+        return $this->response->withJson("Erro ao add usuario" . $e->getMessage(), 500);
     }
 });
 
@@ -352,8 +361,8 @@ $app->get('/rest/purchased/[{id}]', function ($request, $response, $args) {
 });
 
 
-// /rest/user/purchased/user/{id_user} -> SELECT ALL BY USER ID
-$app->get('/rest/user/purchased/user/[{id_user}]', function ($request, $response, $args) {
+// /rest/purchased/user/{id_user} -> SELECT ALL BY USER ID
+$app->get('/rest/purchased/user/[{id_user}]', function ($request, $response, $args) {
     $sth = $this->db->prepare("SELECT * FROM item_comprado WHERE user_id=:id_user");
     $sth->bindParam("id_user", $args['id_user']);
     $sth->execute();
@@ -361,19 +370,28 @@ $app->get('/rest/user/purchased/user/[{id_user}]', function ($request, $response
     return $this->response->withJson($result);
 });
 
+// /rest/user/purchased/user/{id_user} -> SELECT ALL BY USER ID ORDER
+$app->get('/rest/purchased/order/[{id_user}]', function ($request, $response, $args) {
+    $sth = $this->db->prepare("select usuario.nome, item_comprado.pedido, item_comprado.endereco, item_comprado.status from usuario, item_comprado where usuario.user_id = :id_user and item_comprado.user_id = :id_user order by data_compra desc limit 5");
+    $sth->bindParam("id_user", $args['id_user']);
+    $sth->execute();
+    $result = $sth->fetchAll();
+    return $this->response->withJson($result);
+});
 
 // /rest/purchased/add -> INSERT
 $app->post('/rest/purchased/add', function ($request, $response) {
     $input = $request->getParsedBody();
 
-    $sql = "INSERT item_comprado (pedido, endereco, valor_total, statu, user_id) VALUES(:pedido, :endereco, :valor_total, :statu, :user_id)";
+    $sql = "INSERT item_comprado (pedido, endereco, valor_total, forma_pagamento, status, user_id) VALUES(:pedido, :endereco, :valor_total, :forma_pagamento, :status, :user_id)";
 
     try {
         $sth = $this->db->prepare($sql);
         $sth->bindParam("pedido", $input['pedido']);
         $sth->bindParam("endereco", $input['endereco']);
         $sth->bindParam("valor_total", $input['valor_total']);
-        $sth->bindParam("statu", $input['statu']);
+        $sth->bindParam("forma_pagamento", $input['forma_pagamento']);
+        $sth->bindParam("status", $input['status']);
         $sth->bindParam("user_id", $input['user_id']);
         $sth->execute();
 
@@ -387,7 +405,7 @@ $app->post('/rest/purchased/add', function ($request, $response) {
 
         return $this->response->withJson($status);
     } catch (PDOException $e) {
-        return $this->response->withJson("Erro ao add item_comprado");
+        return $this->response->withJson("Erro ao add item_comprado" . $e->getMessage(), 500);
     }
 });
 
@@ -395,25 +413,26 @@ $app->post('/rest/purchased/add', function ($request, $response) {
 $app->put('/rest/purchased/update/[{id_pedido}]', function ($request, $response, $args) {
     $input = $request->getParsedBody();
 
-    $sql = "UPDATE item_comprado SET pedido=:pedido, endereco=:endereco, valor_total=:valor_total, statu=:statu WHERE id_pedido=:id_pedido";
+    $sql = "UPDATE item_comprado SET pedido=:pedido, endereco=:endereco, valor_total=:valor_total, status=:status WHERE id_pedido=:id_pedido";
 
-    $sth = $this->db->prepare($sql);
-    $sth->bindParam("pedido", $input['pedido']);
-    $sth->bindParam("endereco", $input['endereco']);
-    $sth->bindParam("valor_total", $input['valor_total']);
-    $sth->bindParam("statu", $input['statu']);
-    $sth->bindParam("id_pedido", $args['id_pedido']);
+    try {
+        $sth = $this->db->prepare($sql);
+        $sth->bindParam("pedido", $input['pedido']);
+        $sth->bindParam("endereco", $input['endereco']);
+        $sth->bindParam("valor_total", $input['valor_total']);
+        $sth->bindParam("status", $input['status']);
+        $sth->bindParam("id_pedido", $args['id_pedido']);
 
-    $sth->execute();
+        $sth->execute();
 
-    $result = $sth->rowCount();
-
-    if ($result == 1) {
         $status = "item_comprado atualizada com sucesso!";
-    } else {
-        $status = "Erro ao atualizar item_comprado!";
+
+        return $this->response->withJson($status);
+    } catch (Exception $e) {
+        return $this->response->withJson("Error" . $e);
     }
-    return $this->response->withJson($status);
+
+
 });
 
 // /rest/purchased/update/{id_pedido} -> UPDATE PEDIDO STATUS
