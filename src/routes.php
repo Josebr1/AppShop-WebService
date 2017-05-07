@@ -225,3 +225,105 @@ $app->delete('/rest/product/delete/[{id}]', function ($request, $response, $args
     return $this->response->withJson($status);
 });
 
+/**
+ * rest/product/*
+ *
+ *
+ * CRUD user
+ *
+ */
+// /rest/user/all -> SELECT ALL
+$app->get('/rest/user/all', function ($request, $response, $args) {
+    $sth = $this->db->prepare("SELECT * FROM usuario ORDER BY nome");
+    $sth->execute();
+    $result = $sth->fetchAll();
+    return $this->response->withJson($result);
+});
+
+// /rest/user/{id} -> SELECT BY ID
+$app->get('/rest/user/[{id}]', function ($request, $response, $args) {
+    $sth = $this->db->prepare("SELECT * FROM usuario WHERE user_id=:id");
+    $sth->bindParam("id", $args['id']);
+    $sth->execute();
+    $result = $sth->fetchAll();
+    return $this->response->withJson($result);
+});
+
+
+// /rest/user/{name} -> SELECT BY NAME
+$app->get('/rest/user/name/[{nome}]', function ($request, $response, $args) {
+    $sth = $this->db->prepare("select * from usuario where lower(nome) like :nome");
+    $sth->bindParam("nome", $args['nome']);
+    $sth->execute();
+    $result = $sth->fetchAll();
+    return $this->response->withJson($result);
+});
+
+
+// /rest/user/add -> INSERT
+$app->post('/rest/user/add', function ($request, $response) {
+    $input = $request->getParsedBody();
+
+    $sql = "INSERT usuario (user_id, nome, email, telefone) VALUES(:user_id, :nome, :email, :telefone)";
+
+    try {
+        $sth = $this->db->prepare($sql);
+        $sth->bindParam("user_id", $input['user_id']);
+        $sth->bindParam("nome", $input['nome']);
+        $sth->bindParam("email", $input['email']);
+        $sth->bindParam("telefone", $input['telefone']);
+        $sth->execute();
+
+        $result = $sth->rowCount();
+
+        $status = "";
+
+        if ($result == 1) {
+            $status = "usuario Adicionada com sucesso!";
+        }
+
+        return $this->response->withJson($status);
+    } catch (PDOException $e) {
+        return $this->response->withJson("Erro ao add usuario");
+    }
+});
+
+// /rest/user/update/{id} -> UPDATE
+$app->put('/rest/user/update', function ($request, $response, $args) {
+    $input = $request->getParsedBody();
+
+    $sql = "UPDATE usuario SET nome=:nome, telefone=:telefone WHERE user_id=:user_id";
+
+    $sth = $this->db->prepare($sql);
+    $sth->bindParam("nome", $input['nome']);
+    $sth->bindParam("telefone", $input['telefone']);
+    $sth->bindParam("user_id", $input['user_id']);
+
+    $sth->execute();
+
+    $result = $sth->rowCount();
+
+    if ($result == 1) {
+        $status = "usuario atualizada com sucesso!";
+    } else {
+        $status = "Erro ao atualizar usuario!";
+    }
+    return $this->response->withJson($status);
+});
+
+// /rest/user/delete/{id} -> DELETE
+$app->delete('/rest/user/delete/[{id}]', function ($request, $response, $args) {
+    $sth = $this->db->prepare("DELETE FROM usuario WHERE user_id=:id");
+    $sth->bindParam("id", $args['id']);
+    $sth->execute();
+
+    $result = $sth->rowCount();
+
+    if ($result == 1) {
+        $status = "usuario deletada com sucesso!";
+    } else {
+        $status = "Erro ao deletada usuario!";
+    }
+    return $this->response->withJson($status);
+});
+
