@@ -327,3 +327,130 @@ $app->delete('/rest/user/delete/[{id}]', function ($request, $response, $args) {
     return $this->response->withJson($status);
 });
 
+/**
+ * rest/merchandise/purchased/*
+ *
+ *
+ * CRUD purchased -> Item Comprado
+ *
+ */
+// /rest/purchased/all -> SELECT ALL
+$app->get('/rest/purchased/all', function ($request, $response, $args) {
+    $sth = $this->db->prepare("select * from item_comprado order by data_compra");
+    $sth->execute();
+    $result = $sth->fetchAll();
+    return $this->response->withJson($result);
+});
+
+// /rest/purchased/{id} -> SELECT BY ID PEDIDO
+$app->get('/rest/purchased/[{id}]', function ($request, $response, $args) {
+    $sth = $this->db->prepare("SELECT * FROM item_comprado WHERE id_pedido=:id");
+    $sth->bindParam("id", $args['id']);
+    $sth->execute();
+    $result = $sth->fetchAll();
+    return $this->response->withJson($result);
+});
+
+
+// /rest/user/purchased/user/{id_user} -> SELECT ALL BY USER ID
+$app->get('/rest/user/purchased/user/[{id_user}]', function ($request, $response, $args) {
+    $sth = $this->db->prepare("SELECT * FROM item_comprado WHERE user_id=:id_user");
+    $sth->bindParam("id_user", $args['id_user']);
+    $sth->execute();
+    $result = $sth->fetchAll();
+    return $this->response->withJson($result);
+});
+
+
+// /rest/purchased/add -> INSERT
+$app->post('/rest/purchased/add', function ($request, $response) {
+    $input = $request->getParsedBody();
+
+    $sql = "INSERT item_comprado (pedido, endereco, valor_total, statu, user_id) VALUES(:pedido, :endereco, :valor_total, :statu, :user_id)";
+
+    try {
+        $sth = $this->db->prepare($sql);
+        $sth->bindParam("pedido", $input['pedido']);
+        $sth->bindParam("endereco", $input['endereco']);
+        $sth->bindParam("valor_total", $input['valor_total']);
+        $sth->bindParam("statu", $input['statu']);
+        $sth->bindParam("user_id", $input['user_id']);
+        $sth->execute();
+
+        $result = $sth->rowCount();
+
+        $status = "";
+
+        if ($result == 1) {
+            $status = "item_comprado Adicionada com sucesso!";
+        }
+
+        return $this->response->withJson($status);
+    } catch (PDOException $e) {
+        return $this->response->withJson("Erro ao add item_comprado");
+    }
+});
+
+// /rest/purchased/update/{id_pedido} -> UPDATE PEDIDO COMPLETO
+$app->put('/rest/purchased/update/[{id_pedido}]', function ($request, $response, $args) {
+    $input = $request->getParsedBody();
+
+    $sql = "UPDATE item_comprado SET pedido=:pedido, endereco=:endereco, valor_total=:valor_total, statu=:statu WHERE id_pedido=:id_pedido";
+
+    $sth = $this->db->prepare($sql);
+    $sth->bindParam("pedido", $input['pedido']);
+    $sth->bindParam("endereco", $input['endereco']);
+    $sth->bindParam("valor_total", $input['valor_total']);
+    $sth->bindParam("statu", $input['statu']);
+    $sth->bindParam("id_pedido", $args['id_pedido']);
+
+    $sth->execute();
+
+    $result = $sth->rowCount();
+
+    if ($result == 1) {
+        $status = "item_comprado atualizada com sucesso!";
+    } else {
+        $status = "Erro ao atualizar item_comprado!";
+    }
+    return $this->response->withJson($status);
+});
+
+// /rest/purchased/update/{id_pedido} -> UPDATE PEDIDO STATUS
+$app->put('/rest/purchased/update/status/[{id_pedido}]', function ($request, $response, $args) {
+    $input = $request->getParsedBody();
+
+    $sql = "UPDATE item_comprado SET statu=:statu WHERE id_pedido=:id_pedido";
+
+    $sth = $this->db->prepare($sql);
+    $sth->bindParam("statu", $input['statu']);
+    $sth->bindParam("id_pedido", $args['id_pedido']);
+
+    $sth->execute();
+
+    $result = $sth->rowCount();
+
+    if ($result == 1) {
+        $status = "item_comprado atualizada com sucesso!";
+    } else {
+        $status = "Erro ao atualizar item_comprado!";
+    }
+    return $this->response->withJson($status);
+});
+
+
+// /rest/purchased/delete/{id} -> DELETE
+$app->delete('/rest/purchased/delete/[{id}]', function ($request, $response, $args) {
+    $sth = $this->db->prepare("DELETE FROM item_comprado WHERE id_pedido=:id");
+    $sth->bindParam("id", $args['id']);
+    $sth->execute();
+
+    $result = $sth->rowCount();
+
+    if ($result == 1) {
+        $status = "item_comprado deletada com sucesso!";
+    } else {
+        $status = "Erro ao deletada item_comprado!";
+    }
+    return $this->response->withJson($status);
+});
