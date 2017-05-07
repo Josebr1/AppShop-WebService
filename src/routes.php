@@ -56,17 +56,11 @@ $app->post('/rest/category/add', function ($request, $response) {
         $sth->bindParam("icone", $input['icone']);
         $sth->execute();
 
-        $result = $sth->rowCount();
-
-        $status = "";
-
-        if ($result == 1) {
-            $status = "Categoria Adicionada com sucesso!";
-        }
+        $status = "Categoria adicionada com sucesso!";
 
         return $this->response->withJson($status);
     } catch (PDOException $e) {
-        return $this->response->withJson("Erro ao cadastrar categoria");
+        return $this->response->withJson("Erro ao adicionar categoria, categoria pode já está cadastrada." . $e->getCode(), 500);
     }
 });
 
@@ -74,40 +68,50 @@ $app->post('/rest/category/add', function ($request, $response) {
 $app->put('/rest/category/update', function ($request, $response, $args) {
     $input = $request->getParsedBody();
 
-    $sql = "UPDATE categoria SET nome=:nome, descricao=:descricao, icone=:icone WHERE id=:id";
+    try {
+        $sql = "UPDATE categoria SET nome=:nome, descricao=:descricao, icone=:icone WHERE id=:id";
 
-    $sth = $this->db->prepare($sql);
-    $sth->bindParam("nome", $input['nome']);
-    $sth->bindParam("descricao", $input['descricao']);
-    $sth->bindParam("icone", $input['icone']);
-    $sth->bindParam("id", $input['id']);
+        $sth = $this->db->prepare($sql);
+        $sth->bindParam("nome", $input['nome']);
+        $sth->bindParam("descricao", $input['descricao']);
+        $sth->bindParam("icone", $input['icone']);
+        $sth->bindParam("id", $input['id']);
 
-    $sth->execute();
+        $sth->execute();
 
-    $result = $sth->rowCount();
+        $result = $sth->rowCount();
 
-    if ($result == 1) {
-        $status = "Categoria atualizada com sucesso!";
-    } else {
-        $status = "Erro ao atualizar Categoria!";
+        if ($result == 1) {
+            $status = "Categoria atualizada com sucesso!";
+            return $this->response->withJson($status);
+        } else {
+            $status = "Erro ao atualizar categoria.";
+            return $this->response->withJson($status);
+        }
+    } catch (Exception $e) {
+        return $this->response->withJson("Ocorreu algum erro interno." . $e->getCode(), 500);
     }
-    return $this->response->withJson($status);
 });
 
 // /rest/category/delete/{id} -> DELETE
 $app->delete('/rest/category/delete/[{id}]', function ($request, $response, $args) {
-    $sth = $this->db->prepare("DELETE FROM categoria WHERE id=:id");
-    $sth->bindParam("id", $args['id']);
-    $sth->execute();
+    try {
+        $sth = $this->db->prepare("DELETE FROM categoria WHERE id=:id");
+        $sth->bindParam("id", $args['id']);
+        $sth->execute();
 
-    $result = $sth->rowCount();
+        $result = $sth->rowCount();
 
-    if ($result == 1) {
-        $status = "Categoria deletada com sucesso!";
-    } else {
-        $status = "Erro ao deletada Categoria!";
+        if ($result == 1) {
+            $status = "Categoria deletada com sucesso!";
+        } else {
+            $status = "Erro ao deletar categoria.";
+        }
+        return $this->response->withJson($status);
+    } catch (Exception $e) {
+        return $this->response->withJson("Ocorreu algum erro interno." . $e->getCode(), 500);
     }
-    return $this->response->withJson($status);
+
 });
 
 /**
@@ -169,17 +173,10 @@ $app->post('/rest/product/add', function ($request, $response) {
         $sth->bindParam("id_categoria", $input['id_categoria']);
         $sth->execute();
 
-        $result = $sth->rowCount();
-
-        $status = "";
-
-        if ($result == 1) {
-            $status = "produto Adicionada com sucesso!";
-        }
-
-        return $this->response->withJson($status);
+        $status = "Produto adicionado com sucesso!";
+        return $this->response->withJson($status, 200);
     } catch (PDOException $e) {
-        return $this->response->withJson("Erro ao produto categoria");
+        return $this->response->withJson("Ocorreu algum erro interno." . $e->getCode(), 500);
     }
 });
 
@@ -187,42 +184,53 @@ $app->post('/rest/product/add', function ($request, $response) {
 $app->put('/rest/product/update', function ($request, $response, $args) {
     $input = $request->getParsedBody();
 
-    $sql = "UPDATE produto SET nome=:nome, descricao=:descricao, preco=:preco, foto=:foto, id_categoria=:id_categoria WHERE id=:id";
+    try {
+        $sql = "UPDATE produto SET nome=:nome, descricao=:descricao, preco=:preco, foto=:foto, id_categoria=:id_categoria WHERE id=:id";
 
-    $sth = $this->db->prepare($sql);
-    $sth->bindParam("nome", $input['nome']);
-    $sth->bindParam("descricao", $input['descricao']);
-    $sth->bindParam("preco", $input['preco']);
-    $sth->bindParam("foto", $input['foto']);
-    $sth->bindParam("id_categoria", $input['id_categoria']);
-    $sth->bindParam("id", $input['id']);
+        $sth = $this->db->prepare($sql);
+        $sth->bindParam("nome", $input['nome']);
+        $sth->bindParam("descricao", $input['descricao']);
+        $sth->bindParam("preco", $input['preco']);
+        $sth->bindParam("foto", $input['foto']);
+        $sth->bindParam("id_categoria", $input['id_categoria']);
+        $sth->bindParam("id", $input['id']);
 
-    $sth->execute();
+        $sth->execute();
 
-    $result = $sth->rowCount();
+        $result = $sth->rowCount();
 
-    if ($result == 1) {
-        $status = "produto atualizada com sucesso!";
-    } else {
-        $status = "Erro ao atualizar produto!";
+        if ($result == 1) {
+            $status = "Produto atualizado com sucesso!";
+            return $this->response->withJson($status, 200);
+        } else {
+            $status = "Erro ao atualizar produto.";
+            return $this->response->withJson($status, 500);
+        }
+    } catch (Exception $e) {
+        return $this->response->withJson("Ocorreu algum erro interno." . $e->getCode(), 500);
     }
-    return $this->response->withJson($status);
 });
 
 // /rest/product/delete/{id} -> DELETE
 $app->delete('/rest/product/delete/[{id}]', function ($request, $response, $args) {
-    $sth = $this->db->prepare("DELETE FROM produto WHERE id=:id");
-    $sth->bindParam("id", $args['id']);
-    $sth->execute();
 
-    $result = $sth->rowCount();
+    try {
+        $sth = $this->db->prepare("DELETE FROM produto WHERE id=:id");
+        $sth->bindParam("id", $args['id']);
+        $sth->execute();
 
-    if ($result == 1) {
-        $status = "produto deletada com sucesso!";
-    } else {
-        $status = "Erro ao deletada produto!";
+        $result = $sth->rowCount();
+
+        if ($result == 1) {
+            $status = "Produto deletado com sucesso!";
+            return $this->response->withJson($status, 200);
+        } else {
+            $status = "Erro ao deletar o produto.";
+            return $this->response->withJson($status, 500);
+        }
+    } catch (Exception $e) {
+        return $this->response->withJson("Ocorreu algum erro interno." . $e->getCode(), 500);
     }
-    return $this->response->withJson($status);
 });
 
 /**
@@ -283,17 +291,11 @@ $app->post('/rest/user/add', function ($request, $response) {
         $sth->bindParam("telefone", $input['telefone']);
         $sth->execute();
 
-        $result = $sth->rowCount();
-
-        $status = "";
-
-        if ($result == 1) {
-            $status = "usuario Adicionada com sucesso!";
-        }
+        $status = "Usuário adicionado com sucesso!";
 
         return $this->response->withJson($status, 200);
     } catch (PDOException $e) {
-        return $this->response->withJson("Erro ao add usuario" . $e->getMessage(), 500);
+        return $this->response->withJson("Usuário já cadastrado / Nome de usuário já cadastrado." . $e->getCode(), 500);
     }
 });
 
@@ -301,39 +303,47 @@ $app->post('/rest/user/add', function ($request, $response) {
 $app->put('/rest/user/update', function ($request, $response, $args) {
     $input = $request->getParsedBody();
 
-    $sql = "UPDATE usuario SET nome=:nome, telefone=:telefone WHERE user_id=:user_id";
+    try {
+        $sql = "UPDATE usuario SET nome=:nome, telefone=:telefone WHERE user_id=:user_id";
 
-    $sth = $this->db->prepare($sql);
-    $sth->bindParam("nome", $input['nome']);
-    $sth->bindParam("telefone", $input['telefone']);
-    $sth->bindParam("user_id", $input['user_id']);
+        $sth = $this->db->prepare($sql);
+        $sth->bindParam("nome", $input['nome']);
+        $sth->bindParam("telefone", $input['telefone']);
+        $sth->bindParam("user_id", $input['user_id']);
 
-    $sth->execute();
+        $sth->execute();
 
-    $result = $sth->rowCount();
+        $result = $sth->rowCount();
 
-    if ($result == 1) {
-        $status = "usuario atualizada com sucesso!";
-    } else {
-        $status = "Erro ao atualizar usuario!";
+        if ($result == 1) {
+            $status = "Usuário atualizado com sucesso!";
+        } else {
+            $status = "Erro ao atualizar o usuário.";
+        }
+        return $this->response->withJson($status);
+    } catch (Exception $e) {
+        return $this->response->withJson("Ocorreu algum erro interno." . $e->getCode(), 500);
     }
-    return $this->response->withJson($status);
 });
 
 // /rest/user/delete/{id} -> DELETE
 $app->delete('/rest/user/delete/[{id}]', function ($request, $response, $args) {
-    $sth = $this->db->prepare("DELETE FROM usuario WHERE user_id=:id");
-    $sth->bindParam("id", $args['id']);
-    $sth->execute();
+    try {
+        $sth = $this->db->prepare("DELETE FROM usuario WHERE user_id=:id");
+        $sth->bindParam("id", $args['id']);
+        $sth->execute();
 
-    $result = $sth->rowCount();
+        $result = $sth->rowCount();
 
-    if ($result == 1) {
-        $status = "usuario deletada com sucesso!";
-    } else {
-        $status = "Erro ao deletada usuario!";
+        if ($result == 1) {
+            $status = "Usuário deletado com sucesso!";
+        } else {
+            $status = "Erro ao deletar usuário.";
+        }
+        return $this->response->withJson($status);
+    } catch (Exception $e) {
+        return $this->response->withJson("Ocorreu algum erro interno." . $e->getCode(), 500);
     }
-    return $this->response->withJson($status);
 });
 
 /**
@@ -395,17 +405,11 @@ $app->post('/rest/purchased/add', function ($request, $response) {
         $sth->bindParam("user_id", $input['user_id']);
         $sth->execute();
 
-        $result = $sth->rowCount();
+        $status = "Item adicionado com sucesso ao histórico de compras!";
 
-        $status = "";
-
-        if ($result == 1) {
-            $status = "item_comprado Adicionada com sucesso!";
-        }
-
-        return $this->response->withJson($status);
+        return $this->response->withJson($status, 200);
     } catch (PDOException $e) {
-        return $this->response->withJson("Erro ao add item_comprado" . $e->getMessage(), 500);
+        return $this->response->withJson("Ocorreu algum erro interno." . $e->getCode(), 500);
     }
 });
 
@@ -425,11 +429,11 @@ $app->put('/rest/purchased/update/[{id_pedido}]', function ($request, $response,
 
         $sth->execute();
 
-        $status = "item_comprado atualizada com sucesso!";
+        $status = "Item atualizado com sucesso!";
 
         return $this->response->withJson($status);
     } catch (Exception $e) {
-        return $this->response->withJson("Error" . $e);
+        return $this->response->withJson("Ocorreu algum erro interno." . $e->getCode(), 500);
     }
 
 
@@ -439,37 +443,48 @@ $app->put('/rest/purchased/update/[{id_pedido}]', function ($request, $response,
 $app->put('/rest/purchased/update/status/[{id_pedido}]', function ($request, $response, $args) {
     $input = $request->getParsedBody();
 
-    $sql = "UPDATE item_comprado SET statu=:statu WHERE id_pedido=:id_pedido";
+    try {
+        $sql = "UPDATE item_comprado SET statu=:statu WHERE id_pedido=:id_pedido";
 
-    $sth = $this->db->prepare($sql);
-    $sth->bindParam("statu", $input['statu']);
-    $sth->bindParam("id_pedido", $args['id_pedido']);
+        $sth = $this->db->prepare($sql);
+        $sth->bindParam("statu", $input['statu']);
+        $sth->bindParam("id_pedido", $args['id_pedido']);
 
-    $sth->execute();
+        $sth->execute();
 
-    $result = $sth->rowCount();
+        $result = $sth->rowCount();
 
-    if ($result == 1) {
-        $status = "item_comprado atualizada com sucesso!";
-    } else {
-        $status = "Erro ao atualizar item_comprado!";
+        if ($result == 1) {
+            $status = "Status de compras atualizado com sucesso!";
+        } else {
+            $status = "Erro ao atualizar o status do item comprado.";
+        }
+        return $this->response->withJson($status);
+    } catch (Exception $e) {
+        return $this->response->withJson("Ocorreu algum erro interno." . $e->getCode(), 500);
     }
-    return $this->response->withJson($status);
+
 });
 
 
 // /rest/purchased/delete/{id} -> DELETE
 $app->delete('/rest/purchased/delete/[{id}]', function ($request, $response, $args) {
-    $sth = $this->db->prepare("DELETE FROM item_comprado WHERE id_pedido=:id");
-    $sth->bindParam("id", $args['id']);
-    $sth->execute();
 
-    $result = $sth->rowCount();
+    try {
+        $sth = $this->db->prepare("DELETE FROM item_comprado WHERE id_pedido=:id");
+        $sth->bindParam("id", $args['id']);
+        $sth->execute();
 
-    if ($result == 1) {
-        $status = "item_comprado deletada com sucesso!";
-    } else {
-        $status = "Erro ao deletada item_comprado!";
+        $result = $sth->rowCount();
+
+        if ($result == 1) {
+            $status = "Item apagado do histórico de compras com sucesso.!";
+        } else {
+            $status = "Não foi possível apagar o item do histórico de compras.";
+        }
+
+        return $this->response->withJson($status);
+    } catch (Exception $e) {
+        return $this->response->withJson("Ocorreu algum erro interno." . $e->getCode(), 500);
     }
-    return $this->response->withJson($status);
 });
